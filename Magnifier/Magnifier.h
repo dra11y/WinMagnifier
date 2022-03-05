@@ -5,7 +5,7 @@
 
 struct Spring
 {
-	float operator()()
+	operator float()
 	{
 		velocity += (target - current) * acceleration;
 		velocity *= friction;

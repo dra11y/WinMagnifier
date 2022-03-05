@@ -14,7 +14,7 @@ HHOOK MouseHook;
 HHOOK KeyboardHook;
 MSG CurrentMessage;
 
-Spring Tweener;
+Spring MouseZTweener;
 Spring MouseXTweener;
 Spring MouseYTweener;
 
@@ -25,7 +25,7 @@ int Modifiers = Modifiers::NONE;
 
 LRESULT CALLBACK MouseProc(int code, WPARAM wParam, LPARAM lParam)
 {
-	if (ModDown || Tweener > 1.0f)
+	if (ModDown || MouseZTweener > 1.0f)
 	{
 		if (auto mData = cast(MSLLHOOKSTRUCT*)lParam)
 		{
@@ -39,15 +39,15 @@ LRESULT CALLBACK MouseProc(int code, WPARAM wParam, LPARAM lParam)
 			{
 				if (HIWORD(mData->mouseData) == 120)
 				{
-					Tweener += 0.25f;
+					MouseZTweener += 0.25f;
 				}
 				else
 				{
-					auto delta = Tweener - 0.25f;
+					auto delta = MouseZTweener - 0.25f;
 
 					if (delta >= 1.0)
 					{
-						Tweener = delta;
+						MouseZTweener = delta;
 					}
 				}
 
@@ -113,11 +113,11 @@ int main()
 
 			while (true)
 			{
-				auto factor = Tweener();
-				auto x = cast(int)(MouseXTweener() * (1.0 - (1.0 / factor)));
-				auto y = cast(int)(MouseYTweener() * (1.0 - (1.0 / factor)));
+				auto z = cast(float)MouseZTweener;
+				auto x = cast(int)(MouseXTweener * (1.0 - (1.0 / z)));
+				auto y = cast(int)(MouseYTweener * (1.0 - (1.0 / z)));
 
-				MagSetFullscreenTransform(factor, x, y);
+				MagSetFullscreenTransform(z, x, y);
 				DwmFlush();
 			}
 
