@@ -3,7 +3,6 @@
 
 #include <iostream>
 #include <thread>
-#include <format>
 
 #include "Magnifier.h"
 
@@ -62,6 +61,7 @@ LRESULT CALLBACK MouseProc(int code, WPARAM wParam, LPARAM lParam)
 
 LRESULT CALLBACK KeyboardProc(int code, WPARAM wParam, LPARAM lParam)
 {
+	// TODO(pushqrdx) Refactor this shit out, also keyup/down handling is so messy
 	if (auto kData = cast(KBDLLHOOKSTRUCT*)lParam)
 	{
 		auto key = kData->vkCode;
@@ -91,7 +91,7 @@ LRESULT CALLBACK KeyboardProc(int code, WPARAM wParam, LPARAM lParam)
 
 		ModDown = (Modifiers ^ (Modifiers::LWIN | Modifiers::LSHIFT)) == 0;
 
-		if (ModDown && wParam == WM_KEYUP)
+		if (ModDown)
 		{
 			switch (key)
 			{
@@ -100,25 +100,26 @@ LRESULT CALLBACK KeyboardProc(int code, WPARAM wParam, LPARAM lParam)
 				break;
 			case VK_E:
 			{
-				if (MouseZTweener > 1.0f)
-				{
-					State = MouseZTweener;
-					MouseZTweener = 1.0f;
-				}
-				else
-				{
-					POINT pt;
-					if (GetCursorPos(&pt))
+				if (wParam == WM_KEYUP)
+					if (MouseZTweener > 1.0f)
 					{
-						MouseX = pt.x;
-						MouseY = pt.y;
-						MouseXTweener.reset(cast(float)MouseX);
-						MouseYTweener.reset(cast(float)MouseY);
+						State = MouseZTweener;
+						MouseZTweener = 1.0f;
 					}
+					else
+					{
+						POINT pt;
+						if (GetCursorPos(&pt))
+						{
+							MouseX = pt.x;
+							MouseY = pt.y;
+							MouseXTweener.reset(cast(float)MouseX);
+							MouseYTweener.reset(cast(float)MouseY);
+						}
 
-					MouseZTweener = State;
-				}
-				break;
+						MouseZTweener = State;
+					}
+				return 1;
 			}
 			}
 		}
