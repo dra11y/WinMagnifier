@@ -44,12 +44,7 @@ LRESULT CALLBACK MouseProc(int code, WPARAM wParam, LPARAM lParam)
 				}
 				else
 				{
-					auto delta = MouseZTweener - 0.25f;
-
-					if (delta >= 1.0)
-					{
-						MouseZTweener = delta;
-					}
+					MouseZTweener = max(1.0f, MouseZTweener - 0.25f);
 				}
 
 				return 1;
