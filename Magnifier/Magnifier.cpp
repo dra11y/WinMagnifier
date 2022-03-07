@@ -22,6 +22,7 @@ int MouseX;
 int MouseY;
 bool ModDown = false;
 int Modifiers = Modifiers::NONE;
+float State = 1.0f;
 
 LRESULT CALLBACK MouseProc(int code, WPARAM wParam, LPARAM lParam)
 {
@@ -59,7 +60,6 @@ LRESULT CALLBACK MouseProc(int code, WPARAM wParam, LPARAM lParam)
 	return CallNextHookEx(MouseHook, code, wParam, lParam);
 }
 
-
 LRESULT CALLBACK KeyboardProc(int code, WPARAM wParam, LPARAM lParam)
 {
 	if (wParam == WM_KEYUP)
@@ -71,8 +71,9 @@ LRESULT CALLBACK KeyboardProc(int code, WPARAM wParam, LPARAM lParam)
 
 	if (auto kData = cast(KBDLLHOOKSTRUCT*)lParam)
 	{
+		auto key = kData->vkCode;
 
-		switch (kData->vkCode)
+		switch (key)
 		{
 		case VK_LWIN:
 			Modifiers |= Modifiers::LWIN;
@@ -90,9 +91,27 @@ LRESULT CALLBACK KeyboardProc(int code, WPARAM wParam, LPARAM lParam)
 
 		ModDown = (Modifiers ^ (Modifiers::LWIN | Modifiers::LSHIFT)) == 0;
 
-		if (ModDown && kData->vkCode == VK_Q)
+		if (ModDown)
 		{
-			exit(0);
+			switch (key)
+			{
+			case VK_Q:
+				exit(0);
+				break;
+			case VK_T:
+			{
+				if (MouseZTweener > 1.0f)
+				{
+					State = MouseZTweener;
+					MouseZTweener = 1.0f;
+				}
+				else
+				{
+					MouseZTweener = State;
+				}
+				break;
+			}
+			}
 		}
 	}
 
@@ -118,6 +137,7 @@ int main()
 				auto y = cast(int)(MouseYTweener * (1.0 - (1.0 / z)));
 
 				MagSetFullscreenTransform(z, x, y);
+
 				DwmFlush();
 			}
 

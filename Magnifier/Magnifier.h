@@ -2,6 +2,7 @@
 
 #define cast(...) (__VA_ARGS__)
 #define VK_Q 0x51
+#define VK_T 0x54
 
 struct Spring
 {
