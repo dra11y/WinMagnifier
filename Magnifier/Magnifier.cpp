@@ -62,16 +62,16 @@ LRESULT CALLBACK MouseProc(int code, WPARAM wParam, LPARAM lParam)
 
 LRESULT CALLBACK KeyboardProc(int code, WPARAM wParam, LPARAM lParam)
 {
-	if (wParam == WM_KEYUP)
-	{
-		Modifiers = 0x0;
-		ModDown = false;
-		return CallNextHookEx(KeyboardHook, code, wParam, lParam);
-	}
-
 	if (auto kData = cast(KBDLLHOOKSTRUCT*)lParam)
 	{
 		auto key = kData->vkCode;
+
+		if (wParam == WM_KEYUP && (key == VK_LWIN || key == VK_LSHIFT))
+		{
+			Modifiers = 0x0;
+			ModDown = false;
+			return CallNextHookEx(KeyboardHook, code, wParam, lParam);
+		}
 
 		switch (key)
 		{
@@ -91,7 +91,7 @@ LRESULT CALLBACK KeyboardProc(int code, WPARAM wParam, LPARAM lParam)
 
 		ModDown = (Modifiers ^ (Modifiers::LWIN | Modifiers::LSHIFT)) == 0;
 
-		if (ModDown)
+		if (ModDown && wParam == WM_KEYUP)
 		{
 			switch (key)
 			{
