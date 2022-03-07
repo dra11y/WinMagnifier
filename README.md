@@ -6,7 +6,7 @@
 ## Usage: `Win+Shift` +
 
 - Scrollwheel to zoom in/out
-- T to toggle to last zoom level and location
+- E to toggle last zoom level
 - Q to quit
 
 ## License
