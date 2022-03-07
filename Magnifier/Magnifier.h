@@ -14,6 +14,12 @@ struct Spring
 		return current += velocity;
 	}
 
+	auto reset(float destination)
+	{
+		current = target = destination;
+		velocity = 0.0;
+	}
+
 	auto operator=(float destination)
 	{
 		target = destination;

@@ -107,6 +107,15 @@ LRESULT CALLBACK KeyboardProc(int code, WPARAM wParam, LPARAM lParam)
 				}
 				else
 				{
+					POINT pt;
+					if (GetCursorPos(&pt))
+					{
+						MouseX = pt.x;
+						MouseY = pt.y;
+						MouseXTweener.reset(cast(float)MouseX);
+						MouseYTweener.reset(cast(float)MouseY);
+					}
+
 					MouseZTweener = State;
 				}
 				break;
