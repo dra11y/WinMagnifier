@@ -139,13 +139,29 @@ int main()
 				return 1;
 			}
 
+			auto sw = GetSystemMetrics(SM_CXSCREEN);
+			auto sh = GetSystemMetrics(SM_CYSCREEN);
+			auto clamp = [](auto value, auto min, auto max)
+			{
+				return max(min, min(value, max));
+			};
+
 			while (true)
 			{
+				auto x = cast(float)MouseXTweener;
+				auto y = cast(float)MouseYTweener;
 				auto z = cast(float)MouseZTweener;
-				auto x = cast(int)(MouseXTweener * (1.0 - (1.0 / z)));
-				auto y = cast(int)(MouseYTweener * (1.0 - (1.0 / z)));
 
-				MagSetFullscreenTransform(z, x, y);
+				auto f = (1.0 - (1.0 / z));
+				auto pw = (f * sw);
+				auto ph = (f * sh);
+				auto w = (sw - pw);
+				auto h = (sh - ph);
+
+				auto cx = cast(int)clamp(x - (w / 2), 0, pw);
+				auto cy = cast(int)clamp(y - (h / 2), 0, ph);
+
+				MagSetFullscreenTransform(z, cx, cy);
 
 				DwmFlush();
 			}
