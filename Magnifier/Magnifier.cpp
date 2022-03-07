@@ -149,17 +149,13 @@ int main()
 				auto x = cast(float)MouseXTweener;
 				auto y = cast(float)MouseYTweener;
 				auto z = cast(float)MouseZTweener;
-
 				auto f = (1.0 - (1.0 / z));
-				auto pw = (f * sw);
-				auto ph = (f * sh);
-				auto w = (sw - pw);
-				auto h = (sh - ph);
+				auto zw = cast(int)(f * sw);
+				auto zh = cast(int)(f * sh);
+				auto zx = cast(int)(f * x);
+				auto zy = cast(int)(f * y);
 
-				auto cx = cast(int)clamp(x - (w / 2), 0, pw);
-				auto cy = cast(int)clamp(y - (h / 2), 0, ph);
-
-				MagSetFullscreenTransform(z, cx, cy);
+				MagSetFullscreenTransform(z, clamp(zx, 0, zw), clamp(zy, 0, zh));
 
 				DwmFlush();
 			}
