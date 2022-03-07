@@ -1,7 +1,7 @@
 <h2 align="center"><br>Magnifier</h2>
 <p align="center">Smooth magnifier utility for Windows similar to macOS zoom.</p>
 
-[![Preview](https://i.imgur.com/hNhatHp.png)](https://i.imgur.com/7KFp7J9.mp4)
+[![Preview](https://i.imgur.com/hNhatHp.png)](https://i.imgur.com/sv7InpN.mp4)
 
 ## Usage: `Win+Shift` +
 
