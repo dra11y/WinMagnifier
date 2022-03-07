@@ -22,6 +22,7 @@ int MouseY;
 bool ModDown = false;
 int Modifiers = Modifiers::NONE;
 float State = 1.0f;
+bool Running = true;
 
 LRESULT CALLBACK MouseProc(int code, WPARAM wParam, LPARAM lParam)
 {
@@ -96,8 +97,8 @@ LRESULT CALLBACK KeyboardProc(int code, WPARAM wParam, LPARAM lParam)
 			switch (key)
 			{
 			case VK_Q:
-				exit(0);
-				break;
+				Running = false;
+				return 1;
 			case VK_E:
 			{
 				if (wParam == WM_KEYUP)
@@ -132,7 +133,8 @@ int main()
 {
 	FreeConsole();
 
-	std::thread MagnifierThread([]()
+	DWORD MainThreadID = GetCurrentThreadId();
+	std::thread MagnifierThread([&]()
 		{
 			if (!MagInitialize())
 			{
@@ -147,7 +149,7 @@ int main()
 				return max(min, min(value, max));
 			};
 
-			while (true)
+			while (Running)
 			{
 				auto x = cast(float)MouseXTweener;
 				auto y = cast(float)MouseYTweener;
@@ -168,9 +170,12 @@ int main()
 			}
 
 			MagUninitialize();
+			PostThreadMessage(MainThreadID, WM_QUIT, 0, 0);
+			return 0;
 		});
 	MouseHook = SetWindowsHookEx(WH_MOUSE_LL, MouseProc, NULL, NULL);
 	KeyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardProc, NULL, NULL);
+	MagnifierThread.detach();
 
 	while (GetMessage(&CurrentMessage, NULL, 0, 0))
 	{
