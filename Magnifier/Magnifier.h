@@ -1,6 +1,7 @@
 #pragma once
 
 #define cast(...) (__VA_ARGS__)
+#define VK_E 0x45
 #define VK_Q 0x51
 #define VK_T 0x54
 

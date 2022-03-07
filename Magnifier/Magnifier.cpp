@@ -98,7 +98,7 @@ LRESULT CALLBACK KeyboardProc(int code, WPARAM wParam, LPARAM lParam)
 			case VK_Q:
 				exit(0);
 				break;
-			case VK_T:
+			case VK_E:
 			{
 				if (MouseZTweener > 1.0f)
 				{
