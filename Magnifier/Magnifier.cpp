@@ -86,7 +86,7 @@ auto CALLBACK KeyboardHookProc(int code, WPARAM wParam, LPARAM lParam)
 
 auto main() -> int
 {
-#ifndef NDEBUG
+#ifdef NDEBUG
 	FreeConsole();
 #endif
 	if (!MagInitialize())
