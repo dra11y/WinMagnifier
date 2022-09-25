@@ -86,7 +86,9 @@ auto CALLBACK KeyboardHookProc(int code, WPARAM wParam, LPARAM lParam)
 
 auto main() -> int
 {
-	// FreeConsole();
+#ifndef NDEBUG
+	FreeConsole();
+#endif
 	if (!MagInitialize())
 	{
 		puts("Cannot initialize magnifier");
