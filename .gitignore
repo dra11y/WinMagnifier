@@ -35,3 +35,6 @@
 /x64/Debug
 /Magnifier/x64/Release
 /x64/Release
+
+# Directories
+/.vs
