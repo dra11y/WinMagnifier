@@ -39,6 +39,11 @@ struct Spring
 		return current += velocity;
 	}
 
+	operator float()
+	{
+		return current;
+	}
+
 private:
 	float target = 1.0;
 	float current = 1.0;

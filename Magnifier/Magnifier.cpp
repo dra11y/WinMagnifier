@@ -98,8 +98,6 @@ auto main() -> int
 	auto MainThreadID = GetCurrentThreadId();
 	auto ScreenWidth = GetSystemMetrics(SM_CXSCREEN);
 	auto ScreenHeight = GetSystemMetrics(SM_CYSCREEN);
-	auto SmoothMouseX = Spring();
-	auto SmoothMouseY = Spring();
 	auto SmoothMouseZ = Spring();
 	auto CurrentMessage = MSG();
 	auto VSync = std::thread([&] {
@@ -141,16 +139,18 @@ auto main() -> int
 			}
 		}
 
-		// TODO(pushqrdx): Avoid doing this work on each loop by detecting idle state.
-		auto [MouseX, MouseY] = GetCursorPosition();
-		auto z = SmoothMouseZ(MouseZ);
-		auto f = (1.0 - (1.0 / z));
-		auto pw = (f * ScreenWidth);
-		auto ph = (f * ScreenHeight);
-		auto w = (ScreenWidth - pw);
-		auto h = (ScreenHeight - ph);
+		if (MouseZ > 1 || fabs(MouseZ - SmoothMouseZ) > 0.005)
+		{
+			auto [MouseX, MouseY] = GetCursorPosition();
+			auto z = SmoothMouseZ(MouseZ);
+			auto f = (1.0 - (1.0 / z));
+			auto pw = (f * ScreenWidth);
+			auto ph = (f * ScreenHeight);
+			auto w = (ScreenWidth - pw);
+			auto h = (ScreenHeight - ph);
 
-		MagSetFullscreenTransform(z, Clamp(SmoothMouseX(MouseX) - (w / 2), 0, pw), Clamp(SmoothMouseY(MouseY) - (h / 2), 0, ph));
+			MagSetFullscreenTransform(z, Clamp(MouseX - (w / 2), 0, pw), Clamp(MouseY - (h / 2), 0, ph));
+		}
 
 		TranslateMessage(&CurrentMessage);
 		DispatchMessage(&CurrentMessage);
