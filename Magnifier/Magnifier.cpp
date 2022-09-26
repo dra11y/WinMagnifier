@@ -139,10 +139,10 @@ auto main() -> int
 			}
 		}
 
-		if (MouseZ > 1 || fabs(MouseZ - SmoothMouseZ) > 0.005)
+		if (MouseZ > 1 || SmoothMouseZ - MouseZ > 0.005)
 		{
 			auto [MouseX, MouseY] = GetCursorPosition();
-			auto z = SmoothMouseZ(MouseZ);
+			auto z = SmoothMouseZ(MouseZ) - 1.0f <= 0.005 ? 1.0f: SmoothMouseZ;
 			auto f = (1.0 - (1.0 / z));
 			auto pw = (f * ScreenWidth);
 			auto ph = (f * ScreenHeight);
