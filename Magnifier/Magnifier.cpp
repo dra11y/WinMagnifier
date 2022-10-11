@@ -51,9 +51,9 @@ auto main() -> int
 #ifdef NDEBUG
 	FreeConsole();
 #endif
-	if (!MagInitialize())
+	if (not MagInitialize() or not SetProcessDPIAware())
 	{
-		puts("Cannot initialize magnifier");
+		puts("Cannot initialize Magnifier");
 		return 1;
 	}
 
@@ -62,7 +62,7 @@ auto main() -> int
 	auto ScreenHeight = GetSystemMetrics(SM_CYSCREEN);
 	auto SmoothMouseZ = Spring();
 	auto CurrentMessage = MSG();
-	auto VSync = std::thread([&] {
+	std::thread([&] {
 		while (true)
 		{
 			PostThreadMessage(MainThreadID, 0x0420, 0, 0);
@@ -70,8 +70,7 @@ auto main() -> int
 		}
 
 		return 0;
-		});
-	VSync.detach();
+	}).detach();;
 
 	while (GetMessage(&CurrentMessage, 0, 0, 0))
 	{
@@ -96,10 +95,10 @@ auto main() -> int
 			}
 		}
 
-		if (MouseZ > 1 || SmoothMouseZ - MouseZ > 0.005)
+		if (MouseZ > 1 or SmoothMouseZ - MouseZ > 0.005)
 		{
 			auto [MouseX, MouseY] = GetCursorPosition();
-			auto z = SmoothMouseZ(MouseZ) - 1.0f <= 0.005 ? 1.0f: SmoothMouseZ;
+			auto z = SmoothMouseZ(MouseZ) - 1.0f <= 0.005 ? 1.0f : SmoothMouseZ;
 			auto f = (1.0 - (1.0 / z));
 			auto pw = (f * ScreenWidth);
 			auto ph = (f * ScreenHeight);
