@@ -30,7 +30,7 @@ auto GetCursorPosition()
 }
 
 HHOOK MouseHook = nullptr;
-int MouseZ = 1;
+float MouseZ = 1;
 
 auto CALLBACK MouseHookProc(int code, WPARAM wParam, LPARAM lParam)
 {
@@ -105,7 +105,7 @@ auto main() -> int
 			auto w = (ScreenWidth - pw);
 			auto h = (ScreenHeight - ph);
 
-			MagSetFullscreenTransform(z, Clamp(MouseX - (w / 2), 0, pw), Clamp(MouseY - (h / 2), 0, ph));
+			MagSetFullscreenTransform(z, int(Clamp(MouseX - (w / 2), 0, pw)), int(Clamp(MouseY - (h / 2), 0, ph)));
 		}
 
 		TranslateMessage(&CurrentMessage);
