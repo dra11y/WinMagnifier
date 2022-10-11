@@ -30,11 +30,6 @@ auto GetCursorPosition()
 }
 
 HHOOK MouseHook = nullptr;
-HHOOK KeyboardHook = nullptr;
-
-int Modifiers = Modifiers::NONE;
-int CurrentKey = 0x0;
-
 int MouseZ = 1;
 
 auto CALLBACK MouseHookProc(int code, WPARAM wParam, LPARAM lParam)
@@ -49,39 +44,6 @@ auto CALLBACK MouseHookProc(int code, WPARAM wParam, LPARAM lParam)
 	}
 
 	return CallNextHookEx(MouseHook, code, wParam, lParam);
-}
-
-auto CALLBACK KeyboardHookProc(int code, WPARAM wParam, LPARAM lParam)
-{
-	if (auto data = (KBDLLHOOKSTRUCT*)lParam)
-	{
-		CurrentKey = data->vkCode;
-
-		if (wParam == WM_KEYUP && (CurrentKey == VK_LWIN || CurrentKey == VK_LSHIFT))
-		{
-			Modifiers = 0x0;
-			CurrentKey = 0x0;
-			return CallNextHookEx(KeyboardHook, code, wParam, lParam);
-		}
-
-		switch (CurrentKey)
-		{
-		case VK_LWIN:
-			Modifiers |= Modifiers::LWIN;
-			break;
-			//case VK_LMENU:
-			//	Modifiers |= Modifiers::LALT;
-			//	break;
-			//case VK_LCONTROL:
-			//	Modifiers |= Modifiers::LCONTROL;
-			//	break;
-		case VK_LSHIFT:
-			Modifiers |= Modifiers::LSHIFT;
-			break;
-		}
-	}
-
-	return CallNextHookEx(KeyboardHook, code, wParam, lParam);
 }
 
 auto main() -> int
@@ -111,18 +73,13 @@ auto main() -> int
 		});
 	VSync.detach();
 
-	KeyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardHookProc, NULL, NULL);
-
 	while (GetMessage(&CurrentMessage, 0, 0, 0))
 	{
-		if ((Modifiers ^ (Modifiers::LWIN | Modifiers::LSHIFT)) == 0)
+		if (GetAsyncKeyState(VK_LWIN) and GetAsyncKeyState(VK_LSHIFT))
 		{
-			switch (CurrentKey)
+			if (GetAsyncKeyState(VK_Q) < 0) 
 			{
-			case VK_Q: {
 				PostThreadMessage(MainThreadID, WM_QUIT, 0, 0);
-				break;
-			}
 			}
 
 			if (not MouseHook)
@@ -156,7 +113,6 @@ auto main() -> int
 		DispatchMessage(&CurrentMessage);
 	}
 
-	UnhookWindowsHookEx(KeyboardHook);
 	if (MouseHook)
 		UnhookWindowsHookEx(MouseHook);
 	MagUninitialize();

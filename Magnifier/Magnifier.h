@@ -52,11 +52,3 @@ private:
 	float friction = 0.3f;
 };
 
-enum Modifiers
-{
-	NONE = 0,
-	LWIN = 1,
-	LCONTROL = 2,
-	LALT = 4,
-	LSHIFT = 8
-};
