@@ -17,12 +17,12 @@
 
 #include "Magnifier.h"
 
-auto Clamp(auto value, auto min, auto max)
+static auto Clamp(auto value, auto min, auto max)
 {
 	return max(min, min(value, max));
 }
 
-auto GetCursorPosition()
+static auto GetCursorPosition()
 {
 	POINT pnt;
 	GetCursorPos(&pnt);
@@ -30,15 +30,21 @@ auto GetCursorPosition()
 }
 
 HHOOK MouseHook = nullptr;
-float MouseZ = 1;
+double MouseZ = 1;
 
-auto CALLBACK MouseHookProc(int code, WPARAM wParam, LPARAM lParam)
+static auto CALLBACK MouseHookProc(int code, WPARAM wParam, LPARAM lParam)
 {
 	if (auto data = (MSLLHOOKSTRUCT*)lParam)
 	{
 		if (wParam == WM_MOUSEWHEEL)
 		{
-			MouseZ = Clamp(MouseZ + (HIWORD(data->mouseData) == 120 ? 1 : -1), 1, 20);
+			auto isOut = HIWORD(data->mouseData) == 120;
+			if (isOut) {
+				MouseZ /= 1.25;
+			} else {
+				MouseZ *= 1.25;
+			}
+			MouseZ = Clamp(MouseZ, 1, 20);
 			return (LRESULT)0x1;
 		}
 	}
@@ -70,12 +76,13 @@ auto main() -> int
 		}
 
 		return 0;
-	}).detach();;
+	}).detach();
 
 	while (GetMessage(&CurrentMessage, 0, 0, 0))
 	{
-		if (GetAsyncKeyState(VK_LWIN) and GetAsyncKeyState(VK_LSHIFT))
-		{
+		//if (GetAsyncKeyState(VK_LWIN) and GetAsyncKeyState(VK_LSHIFT))
+		if (GetAsyncKeyState(VK_LWIN))
+			{
 			if (GetAsyncKeyState(VK_Q) < 0) 
 			{
 				PostThreadMessage(MainThreadID, WM_QUIT, 0, 0);
@@ -99,13 +106,20 @@ auto main() -> int
 		{
 			auto [MouseX, MouseY] = GetCursorPosition();
 			auto z = SmoothMouseZ(MouseZ) - 1.0f <= 0.005 ? 1.0f : SmoothMouseZ;
+			printf("z: %f\n", z);
 			auto f = (1.0 - (1.0 / z));
 			auto pw = (f * ScreenWidth);
 			auto ph = (f * ScreenHeight);
 			auto w = (ScreenWidth - pw);
 			auto h = (ScreenHeight - ph);
 
-			MagSetFullscreenTransform(z, int(Clamp(MouseX - (w / 2), 0, pw)), int(Clamp(MouseY - (h / 2), 0, ph)));
+			float mouseRelX = float(MouseX) / float(ScreenWidth);
+			float mouseRelY = float(MouseY) / float(ScreenHeight);
+
+			auto x = int(Clamp(MouseX - (w * mouseRelX), 0, pw));
+			auto y = int(Clamp(MouseY - (h * mouseRelY), 0, ph));
+
+			MagSetFullscreenTransform(z, x, y);
 		}
 
 		TranslateMessage(&CurrentMessage);
