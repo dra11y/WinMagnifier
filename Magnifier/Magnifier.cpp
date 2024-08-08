@@ -27,7 +27,6 @@ LRESULT CALLBACK KeyboardHookProc(int code, WPARAM wParam, LPARAM lParam)
 				isLWinPressed = true;
 				otherKeyPressedWithLWin = false;
 				lWinPressTime = std::chrono::steady_clock::now();
-				// return 1; // Trap the LWin key press
 			}
 			else if (isLWinPressed)
 			{
@@ -46,6 +45,7 @@ LRESULT CALLBACK KeyboardHookProc(int code, WPARAM wParam, LPARAM lParam)
 				{
 					MouseZ /= 1.25;
 					MouseZ = Clamp(MouseZ, 1.0, 20.0);
+					return 1; // Trap the key
 				}
 			}
 		}
