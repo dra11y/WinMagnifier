@@ -3,7 +3,9 @@
 #include <atomic>
 #include <dwmapi.h>
 #include <magnification.h>
+#include <shellapi.h>
 #include <thread>
+#include <windowsx.h>
 
 #pragma comment(lib, "dwmapi.lib")
 #pragma comment(lib, "magnification.lib")

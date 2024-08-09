@@ -1,5 +1,7 @@
 #include "Magnifier.h"
 
+#include "resource.h"
+
 HHOOK MouseHook = nullptr;
 HHOOK KeyboardHook = nullptr;
 
@@ -9,6 +11,61 @@ double MouseZ = 1;
 std::atomic<bool> isLWinPressed{ false };
 std::atomic<bool> otherKeyPressedWithLWin{ false };
 std::chrono::time_point<std::chrono::steady_clock> lWinPressTime;
+
+// Tray icon
+#define WM_TRAYICON (WM_USER + 1)
+#define ID_TRAY_EXIT 1001
+
+NOTIFYICONDATA nid;
+HMENU hMenu;
+
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	switch (uMsg)
+	{
+	case WM_TRAYICON:
+		if (lParam == WM_RBUTTONUP)
+		{
+			POINT p;
+			GetCursorPos(&p);
+			SetForegroundWindow(hwnd);
+			TrackPopupMenu(hMenu, TPM_BOTTOMALIGN | TPM_LEFTALIGN, p.x, p.y, 0, hwnd, NULL);
+			PostMessage(hwnd, WM_NULL, 0, 0);
+		}
+		break;
+	case WM_COMMAND:
+		if (LOWORD(wParam) == ID_TRAY_EXIT)
+		{
+			PostQuitMessage(0);
+		}
+		break;
+	default:
+		return DefWindowProc(hwnd, uMsg, wParam, lParam);
+	}
+	return 0;
+}
+
+HWND CreateHiddenWindow(HINSTANCE hInstance)
+{
+	WNDCLASSEX wc = { 0 };
+
+	wc.cbSize = sizeof(WNDCLASSEX);
+	wc.lpfnWndProc = WindowProc;
+	wc.hInstance = hInstance;
+	wc.lpszClassName = L"HiddenWindowClass";
+
+	RegisterClassEx(&wc);
+
+	return CreateWindowEx(
+		0,
+		L"HiddenWindowClass",
+		L"Hidden Window",
+		0, 0, 0, 0, 0,
+		HWND_MESSAGE, // Message-only window
+		NULL,
+		hInstance,
+		NULL);
+}
 
 static auto Clamp(auto value, auto min, auto max)
 {
@@ -103,15 +160,7 @@ static auto CALLBACK MouseHookProc(int code, WPARAM wParam, LPARAM lParam)
 	return CallNextHookEx(MouseHook, code, wParam, lParam);
 }
 
-
-
-int APIENTRY WinMain(
-	_In_ HINSTANCE hInstance,
-	_In_opt_ HINSTANCE hPrevInstance,
-	_In_ LPSTR lpCmdLine,
-	_In_ int nShowCmd
-)
-//int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nShowCmd)
 {
 #ifdef _DEBUG
 	AllocConsole();
@@ -120,6 +169,19 @@ int APIENTRY WinMain(
 	freopen_s(&fDummy, "CONOUT$", "w", stderr);
 	freopen_s(&fDummy, "CONIN$", "r", stdin);
 #endif
+
+	// Use mutex to ensure only one concurrent instance
+	const char* mutexName = "MagnifierMutex";
+	HANDLE hMutex = CreateMutexA(NULL, TRUE, mutexName);
+	if (hMutex == NULL || GetLastError() == ERROR_ALREADY_EXISTS)
+	{
+		if (hMutex)
+		{
+			CloseHandle(hMutex);
+		}
+		return 0;
+	}
+
 	if (not MagInitialize() or not SetProcessDPIAware())
 	{
 		puts("Cannot initialize Magnifier");
@@ -143,9 +205,49 @@ int APIENTRY WinMain(
 
 	KeyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardHookProc, NULL, NULL);
 
+	// Create a hidden window for tray icon interaction
+	HWND hHiddenWnd = CreateHiddenWindow(hInstance);
+
+	if (!hHiddenWnd)
+	{
+		puts("Cannot create hidden window");
+		return 1;
+	}
+
+	// Initialize the NOTIFYICONDATA structure
+	ZeroMemory(&nid, sizeof(nid));
+	nid.cbSize = sizeof(NOTIFYICONDATA);
+	nid.hWnd = hHiddenWnd;  // Correctly set the window handle here
+	nid.uID = 1;
+	nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
+	nid.uCallbackMessage = WM_TRAYICON;
+	nid.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1));
+	wcsncpy_s(nid.szTip, sizeof(nid.szTip) / sizeof(WCHAR), L"Magnifier App", _TRUNCATE);
+
+	// Create the tray menu
+	hMenu = CreatePopupMenu();
+	AppendMenu(hMenu, MF_STRING, ID_TRAY_EXIT, L"Quit");
+
+	// Display the tray icon
+	Shell_NotifyIcon(NIM_ADD, &nid);
+
 	while (GetMessage(&CurrentMessage, 0, 0, 0))
 	{
-		//if (GetAsyncKeyState(VK_LWIN) and GetAsyncKeyState(VK_LSHIFT))
+		if (CurrentMessage.lParam == WM_RBUTTONUP)  // Right-click event
+		{
+			POINT p;
+			GetCursorPos(&p);
+			SetForegroundWindow(hHiddenWnd);  // Bring the hidden window to the foreground
+			TrackPopupMenu(hMenu, TPM_BOTTOMALIGN | TPM_LEFTALIGN, p.x, p.y, 0, hHiddenWnd, NULL);
+		}
+		else if (CurrentMessage.message == WM_COMMAND)
+		{
+			if (LOWORD(CurrentMessage.wParam) == ID_TRAY_EXIT)
+			{
+				PostQuitMessage(0);
+			}
+		}
+
 		if (GetAsyncKeyState(VK_LWIN))
 			{
 			if (GetAsyncKeyState(VK_Q) < 0) 
@@ -158,6 +260,7 @@ int APIENTRY WinMain(
 				MouseHook = SetWindowsHookEx(WH_MOUSE_LL, MouseHookProc, NULL, NULL);
 			}
 		}
+
 		else
 		{
 			if (MouseHook)
@@ -170,7 +273,8 @@ int APIENTRY WinMain(
 		if (MouseZ > 1 or SmoothMouseZ - MouseZ > 0.005)
 		{
 			auto [MouseX, MouseY] = GetCursorPosition();
-			auto z = SmoothMouseZ(MouseZ) - 1.0f <= 0.005 ? 1.0f : SmoothMouseZ;
+			//auto z = SmoothMouseZ(MouseZ) - 1.0f <= 0.005 ? 1.0f : SmoothMouseZ;
+			auto z = (static_cast<float>(SmoothMouseZ(MouseZ)) - 1.0f <= 0.005f) ? 1.0f : static_cast<float>(SmoothMouseZ);
 			printf("z: %f\n", z);
 			auto f = (1.0 - (1.0 / z));
 			auto pw = (f * ScreenWidth);
@@ -198,6 +302,15 @@ int APIENTRY WinMain(
 		UnhookWindowsHookEx(KeyboardHook);
 
 	MagUninitialize();
+
+	Shell_NotifyIcon(NIM_DELETE, &nid);
+	DestroyMenu(hMenu);
+
+	if (hMutex)
+	{
+		ReleaseMutex(hMutex);
+		CloseHandle(hMutex);
+	}
 
 	return 0;
 }
